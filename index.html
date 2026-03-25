@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VoiceAAC — Communicate With Your Own Voice</title>
 <meta name="description" content="VoiceAAC is the AI-powered AAC app that gives everyone a voice. Use Apple Personal Voice to speak in YOUR voice. Beautiful, affordable, and designed for real life.">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -54,26 +53,6 @@ body {
   color: var(--text);
   line-height: 1.6;
   overflow-x: hidden;
-}
-
-/* ============================================
-   P5.JS CANVAS — sits behind everything
-   ============================================ */
-#p5-bg {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.4;
-}
-
-#p5-bg canvas {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
 }
 
 /* ============================================
@@ -197,59 +176,27 @@ nav.scrolled {
   align-items: center;
 }
 
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--coral-light);
-  color: var(--coral);
-  font-size: 13px;
-  font-weight: 600;
-  padding: 8px 18px;
-  border-radius: 100px;
-  margin-bottom: 24px;
-}
-
-.hero-badge::before {
-  content: '';
-  width: 8px;
-  height: 8px;
-  background: var(--coral);
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(0.8); }
-}
-
 .hero h1 {
   font-family: 'Nunito', sans-serif;
-  font-size: clamp(40px, 5.5vw, 64px);
+  font-size: clamp(52px, 7vw, 80px);
   font-weight: 900;
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-  margin-bottom: 24px;
+  line-height: 1.0;
+  letter-spacing: -0.04em;
+  margin-bottom: 8px;
   color: var(--text);
 }
 
-.hero h1 em {
-  font-style: normal;
+.hero-period {
   color: var(--coral);
-  position: relative;
 }
 
-.hero h1 em::after {
-  content: '';
-  position: absolute;
-  bottom: 4px;
-  left: 0;
-  right: 0;
-  height: 6px;
-  background: var(--coral-light);
-  border-radius: 3px;
-  z-index: -1;
+.hero-aac-full {
+  font-size: clamp(15px, 2vw, 19px);
+  font-weight: 500;
+  color: var(--coral);
+  letter-spacing: 0.04em;
+  margin-bottom: 24px;
+  opacity: 0.85;
 }
 
 .hero-desc {
@@ -1063,9 +1010,6 @@ footer {
 </head>
 <body>
 
-<!-- P5.JS BACKGROUND — Resonant Murmurs -->
-<div id="p5-bg"></div>
-
 <!-- CONTENT LAYER -->
 <div class="content-layer">
 
@@ -1101,9 +1045,9 @@ footer {
   <div class="container">
     <div class="hero-grid">
       <div class="hero-text">
-        <div class="hero-badge">AI-Powered AAC</div>
-        <h1>Communicate with <em>your own voice</em></h1>
-        <p class="hero-desc">VoiceAAC turns your iPhone into a powerful communication tool. Use Apple Personal Voice to speak in YOUR voice — not a robot's. Beautiful, affordable, and designed for real life.</p>
+        <h1>VoiceAAC<span class="hero-period">.</span></h1>
+        <p class="hero-aac-full">Augmentative and Alternative Communication</p>
+        <p class="hero-desc">Your iPhone becomes a powerful communication tool. Use Apple Personal Voice to speak in YOUR voice — not a robot's. Beautiful, affordable, and designed for real life.</p>
         <div class="hero-actions">
           <a href="#download" class="btn-primary">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -1447,166 +1391,7 @@ footer {
 
 </div><!-- /content-layer -->
 
-<!-- ============================================
-     P5.JS — RESONANT MURMURS ALGORITHM
-     Subtle wave-emitter interference pattern
-     ============================================ -->
 <script>
-// ═══════════════════════════════════════════════════════════════
-// RESONANT MURMURS — Algorithmic background for VoiceAAC
-// Philosophy: Voice emerging from silence, overlapping waves
-// creating moments of resonance and connection
-// ═══════════════════════════════════════════════════════════════
-
-let emitters = [];
-let ripples = [];
-let noiseTime = 0;
-let canvasW, canvasH;
-
-// VoiceAAC palette — used as emotional frequencies
-const PALETTE = {
-  coral: [232, 114, 92],
-  sage: [123, 174, 142],
-  lavender: [155, 142, 196],
-  gold: [228, 185, 106],
-  sky: [107, 165, 215],
-};
-
-const COLORS = [PALETTE.coral, PALETTE.sage, PALETTE.lavender, PALETTE.gold, PALETTE.sky];
-
-function setup() {
-  canvasW = windowWidth;
-  canvasH = windowHeight;
-  let canvas = createCanvas(canvasW, canvasH);
-  canvas.parent('p5-bg');
-
-  // Initialize emitters along noise-driven paths
-  for (let i = 0; i < 8; i++) {
-    emitters.push(new WaveEmitter(i));
-  }
-}
-
-function draw() {
-  clear();
-  noiseTime += 0.003;
-
-  // Update emitters — they drift slowly along noise paths
-  for (let em of emitters) {
-    em.update();
-    em.maybeEmit();
-  }
-
-  // Update and draw ripples
-  for (let i = ripples.length - 1; i >= 0; i--) {
-    ripples[i].update();
-    ripples[i].display();
-    if (ripples[i].isDead()) {
-      ripples.splice(i, 1);
-    }
-  }
-
-  // Soft cap on ripple count for performance
-  if (ripples.length > 60) {
-    ripples.splice(0, ripples.length - 60);
-  }
-}
-
-function windowResized() {
-  canvasW = windowWidth;
-  canvasH = windowHeight;
-  resizeCanvas(canvasW, canvasH);
-}
-
-// ═══════════════════════════════════════════════════════════════
-// WAVE EMITTER — Invisible source points that drift and emit
-// Positioned along Perlin noise paths (organic, human trajectories)
-// ═══════════════════════════════════════════════════════════════
-
-class WaveEmitter {
-  constructor(index) {
-    this.index = index;
-    this.noiseOffsetX = index * 1000;
-    this.noiseOffsetY = index * 1000 + 5000;
-    this.x = noise(this.noiseOffsetX) * canvasW;
-    this.y = noise(this.noiseOffsetY) * canvasH;
-    this.emitInterval = random(90, 200); // frames between emits
-    this.frameCount = floor(random(0, this.emitInterval));
-    this.colorIndex = index % COLORS.length;
-    this.strength = random(0.4, 1.0);
-  }
-
-  update() {
-    // Drift along noise path — slow, organic movement
-    this.noiseOffsetX += 0.002;
-    this.noiseOffsetY += 0.002;
-    this.x = noise(this.noiseOffsetX) * canvasW;
-    this.y = noise(this.noiseOffsetY) * canvasH;
-    this.frameCount++;
-  }
-
-  maybeEmit() {
-    if (this.frameCount >= this.emitInterval) {
-      this.frameCount = 0;
-      this.emitInterval = random(80, 180);
-      ripples.push(new Ripple(this.x, this.y, this.colorIndex, this.strength));
-    }
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════
-// RIPPLE — Concentric ring that expands and fades
-// Color shifts from coral (young/energetic) to sage (calm/received)
-// Where ripples overlap, constructive interference brightens them
-// ═══════════════════════════════════════════════════════════════
-
-class Ripple {
-  constructor(x, y, colorIndex, strength) {
-    this.x = x;
-    this.y = y;
-    this.radius = 0;
-    this.maxRadius = random(200, 500);
-    this.speed = random(0.6, 1.4);
-    this.colorIndex = colorIndex;
-    this.strength = strength;
-    this.life = 1.0;
-    this.strokeW = random(1.0, 2.5);
-  }
-
-  update() {
-    this.radius += this.speed;
-    this.life = 1.0 - (this.radius / this.maxRadius);
-    this.life = Math.max(0, this.life);
-  }
-
-  display() {
-    if (this.life <= 0) return;
-
-    let col = COLORS[this.colorIndex];
-    let alpha = this.life * this.strength * 35; // Very subtle
-
-    // Ease the alpha — stronger in middle of life
-    let easedLife = sin(this.life * PI);
-    alpha *= easedLife;
-
-    noFill();
-    stroke(col[0], col[1], col[2], alpha);
-    strokeWeight(this.strokeW * this.life);
-    ellipse(this.x, this.y, this.radius * 2, this.radius * 2);
-
-    // Second, thinner ring slightly behind — creates depth
-    if (this.life > 0.3) {
-      let innerAlpha = alpha * 0.4;
-      stroke(col[0], col[1], col[2], innerAlpha);
-      strokeWeight(this.strokeW * this.life * 0.5);
-      ellipse(this.x, this.y, this.radius * 1.6, this.radius * 1.6);
-    }
-  }
-
-  isDead() {
-    return this.radius >= this.maxRadius;
-  }
-}
-
 // ═══════════════════════════════════════════════════════════════
 // NAV SCROLL EFFECT
 // ═══════════════════════════════════════════════════════════════
