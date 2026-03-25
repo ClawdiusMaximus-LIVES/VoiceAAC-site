@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VoiceAAC — Communicate With Your Own Voice</title>
+<meta name="description" content="VoiceAAC is the AI-powered AAC app that gives everyone a voice. Use Apple Personal Voice to speak in YOUR voice. Beautiful, affordable, and designed for real life.">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Nunito:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ============================================
+   VOICEAAC WEBSITE — DESIGN SYSTEM
+   Philosophy: Warm & Calming
+   P5.js: Resonant Murmurs (subtle background)
+   ============================================ */
+
+:root {
+  --bg: #FBF8F4;
+  --bg-warm: #F7F2EB;
+  --surface: #FFFFFF;
+  --coral: #E8725C;
+  --coral-light: #FCEAE6;
+  --coral-dark: #C95A46;
+  --sage: #7BAE8E;
+  --sage-light: #E8F3EC;
+  --lavender: #9B8EC4;
+  --lavender-light: #EDE8F5;
+  --gold: #E4B96A;
+  --gold-light: #FBF3E2;
+  --sky: #6BA5D7;
+  --sky-light: #E4F0FA;
+  --text: #2D2926;
+  --text-secondary: #6B6560;
+  --text-muted: #9B9590;
+  --border: #E8E2DA;
+  --radius: 20px;
+  --radius-sm: 12px;
+  --radius-lg: 28px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ============================================
+   P5.JS CANVAS — sits behind everything
+   ============================================ */
+#p5-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+#p5-bg canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ============================================
+   LAYOUT
+   ============================================ */
+.content-layer {
+  position: relative;
+  z-index: 1;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+section {
+  padding: 100px 0;
+}
+
+/* ============================================
+   NAVIGATION
+   ============================================ */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 16px 32px;
+  transition: all 0.4s ease;
+}
+
+nav.scrolled {
+  background: rgba(251, 248, 244, 0.85);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: 0 1px 0 var(--border);
+}
+
+.nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.nav-logo-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(232,114,92,0.2);
+}
+
+.nav-logo-icon svg { width: 100%; height: 100%; display: block; }
+
+.nav-logo span {
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  list-style: none;
+}
+
+.nav-links a {
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+
+.nav-links a:hover { color: var(--coral); }
+
+.nav-cta {
+  background: var(--coral);
+  color: white !important;
+  padding: 10px 24px;
+  border-radius: 100px;
+  font-weight: 600 !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 4px 16px rgba(232,114,92,0.25);
+}
+
+.nav-cta:hover {
+  background: var(--coral-dark) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(232,114,92,0.35) !important;
+}
+
+/* ============================================
+   HERO SECTION
+   ============================================ */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding-top: 80px;
+  position: relative;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--coral-light);
+  color: var(--coral);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 18px;
+  border-radius: 100px;
+  margin-bottom: 24px;
+}
+
+.hero-badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: var(--coral);
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+.hero h1 {
+  font-family: 'Nunito', sans-serif;
+  font-size: clamp(40px, 5.5vw, 64px);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+.hero h1 em {
+  font-style: normal;
+  color: var(--coral);
+  position: relative;
+}
+
+.hero h1 em::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: var(--coral-light);
+  border-radius: 3px;
+  z-index: -1;
+}
+
+.hero-desc {
+  font-size: 18px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 36px;
+  max-width: 480px;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--coral);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 16px 32px;
+  border-radius: 100px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 24px rgba(232,114,92,0.3);
+}
+
+.btn-primary:hover {
+  background: var(--coral-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 32px rgba(232,114,92,0.4);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 16px 28px;
+  border-radius: 100px;
+  text-decoration: none;
+  border: 2px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--coral);
+  color: var(--coral);
+}
+
+.hero-social-proof {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.avatar-stack {
+  display: flex;
+}
+
+.avatar-stack .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid var(--bg);
+  margin-left: -10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.avatar-stack .avatar:first-child { margin-left: 0; }
+.avatar:nth-child(1) { background: var(--coral-light); }
+.avatar:nth-child(2) { background: var(--sage-light); }
+.avatar:nth-child(3) { background: var(--lavender-light); }
+.avatar:nth-child(4) { background: var(--gold-light); }
+
+.hero-social-proof p {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.hero-social-proof strong { color: var(--text-secondary); }
+
+/* Phone mockup */
+.hero-visual {
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.phone-frame {
+  width: 300px;
+  height: 620px;
+  background: #1a1a1a;
+  border-radius: 40px;
+  padding: 12px;
+  box-shadow:
+    0 40px 80px rgba(0,0,0,0.15),
+    0 20px 40px rgba(232,114,92,0.1),
+    inset 0 0 0 2px rgba(255,255,255,0.1);
+  position: relative;
+  z-index: 2;
+}
+
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  background: var(--bg);
+  border-radius: 30px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.phone-status-bar {
+  height: 48px;
+  padding: 14px 24px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.phone-app-header {
+  padding: 8px 20px 16px;
+  text-align: center;
+}
+
+.phone-app-header h3 {
+  font-family: 'Nunito', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.phone-app-header p {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Sentence strip */
+.phone-sentence-strip {
+  margin: 0 14px 12px;
+  background: white;
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  min-height: 48px;
+}
+
+.strip-word {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.strip-cursor {
+  width: 2px;
+  height: 20px;
+  background: var(--coral);
+  border-radius: 1px;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* Symbol grid */
+.phone-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 0 14px 14px;
+  align-content: start;
+}
+
+.phone-symbol {
+  background: white;
+  border-radius: 14px;
+  padding: 10px 4px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  transition: transform 0.2s;
+}
+
+.phone-symbol .emoji { font-size: 24px; }
+.phone-symbol .label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Color-coded borders for part of speech */
+.pos-verb { border-bottom: 3px solid var(--coral); }
+.pos-noun { border-bottom: 3px solid var(--sky); }
+.pos-adj { border-bottom: 3px solid var(--lavender); }
+.pos-social { border-bottom: 3px solid var(--gold); }
+.pos-pronoun { border-bottom: 3px solid var(--sage); }
+
+/* Floating elements around phone */
+.float-element {
+  position: absolute;
+  border-radius: var(--radius);
+  background: white;
+  padding: 14px 20px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  animation: floatY 4s ease-in-out infinite;
+  z-index: 3;
+}
+
+.float-element .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.float-1 { top: 60px; right: -30px; animation-delay: 0s; }
+.float-1 .dot { background: var(--sage); }
+
+.float-2 { bottom: 120px; left: -40px; animation-delay: 1.5s; }
+.float-2 .dot { background: var(--coral); }
+
+.float-3 { top: 200px; left: -20px; animation-delay: 0.8s; }
+.float-3 .dot { background: var(--lavender); }
+
+/* ============================================
+   FEATURES SECTION
+   ============================================ */
+.features { background: white; }
+
+.section-header {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto 64px;
+}
+
+.section-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--coral);
+  margin-bottom: 16px;
+}
+
+.section-header h2 {
+  font-family: 'Nunito', sans-serif;
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+
+.section-header p {
+  font-size: 17px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.feature-card {
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 36px 32px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--border);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+}
+
+.feature-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.fi-coral { background: var(--coral-light); }
+.fi-sage { background: var(--sage-light); }
+.fi-lavender { background: var(--lavender-light); }
+.fi-gold { background: var(--gold-light); }
+.fi-sky { background: var(--sky-light); }
+.fi-warm { background: #FFF5F0; }
+
+.feature-card h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+
+.feature-card p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.premium-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  background: var(--gold-light);
+  padding: 3px 10px;
+  border-radius: 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+/* ============================================
+   HOW IT WORKS
+   ============================================ */
+.how-it-works { background: var(--bg); }
+
+.steps-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+  position: relative;
+}
+
+.steps-row::before {
+  content: '';
+  position: absolute;
+  top: 36px;
+  left: 60px;
+  right: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--coral), var(--sage), var(--lavender), var(--gold));
+  border-radius: 1px;
+  z-index: 0;
+}
+
+.step-card {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.step-number {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 28px;
+  font-weight: 900;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+.step-card:nth-child(1) .step-number { color: var(--coral); border: 3px solid var(--coral-light); }
+.step-card:nth-child(2) .step-number { color: var(--sage); border: 3px solid var(--sage-light); }
+.step-card:nth-child(3) .step-number { color: var(--lavender); border: 3px solid var(--lavender-light); }
+.step-card:nth-child(4) .step-number { color: var(--gold); border: 3px solid var(--gold-light); }
+
+.step-card h3 {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.step-card p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* ============================================
+   PRICING
+   ============================================ */
+.pricing { background: white; }
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.price-card {
+  background: var(--bg);
+  border-radius: var(--radius-lg);
+  padding: 40px 32px;
+  text-align: center;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.price-card.featured {
+  background: white;
+  border-color: var(--coral);
+  transform: scale(1.04);
+  box-shadow: 0 24px 48px rgba(232,114,92,0.12);
+}
+
+.price-card.featured::before {
+  content: 'Best Value';
+  position: absolute;
+  top: -14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--coral);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 5px 20px;
+  border-radius: 100px;
+}
+
+.price-card h3 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.price-card .price {
+  font-family: 'Nunito', sans-serif;
+  font-size: 44px;
+  font-weight: 900;
+  color: var(--coral);
+  margin: 16px 0 4px;
+  letter-spacing: -0.03em;
+}
+
+.price-card .price-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.price-card .price span {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.price-card ul {
+  list-style: none;
+  text-align: left;
+  margin-bottom: 28px;
+}
+
+.price-card ul li {
+  font-size: 14px;
+  color: var(--text-secondary);
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.price-card ul li:last-child { border: none; }
+
+.price-card ul li::before {
+  content: '✓';
+  color: var(--sage);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.price-card .btn-primary {
+  width: 100%;
+  justify-content: center;
+  font-size: 15px;
+  padding: 14px;
+}
+
+.price-card:not(.featured) .btn-primary {
+  background: var(--text);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+
+.price-card:not(.featured) .btn-primary:hover {
+  background: var(--coral);
+  box-shadow: 0 6px 20px rgba(232,114,92,0.3);
+}
+
+.price-card .price.free {
+  color: var(--sage);
+}
+
+/* ============================================
+   PERSONAL VOICE HIGHLIGHT
+   ============================================ */
+.voice-section {
+  background: linear-gradient(135deg, #FEF0EC 0%, #F7F2EB 50%, #EDE8F5 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.voice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.voice-content h2 {
+  font-family: 'Nunito', sans-serif;
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 20px;
+}
+
+.voice-content p {
+  font-size: 17px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 16px;
+}
+
+.voice-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.voice-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(8px);
+  border-radius: var(--radius-sm);
+  padding: 20px;
+}
+
+.voice-step-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--coral);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.voice-step h4 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.voice-step p { font-size: 13px; color: var(--text-secondary); margin: 0; }
+
+.voice-visual {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.waveform-art {
+  width: 320px;
+  height: 320px;
+  position: relative;
+}
+
+.wave-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid var(--coral);
+  opacity: 0;
+  animation: waveExpand 3s ease-out infinite;
+}
+
+.wave-ring:nth-child(1) { animation-delay: 0s; }
+.wave-ring:nth-child(2) { animation-delay: 0.8s; }
+.wave-ring:nth-child(3) { animation-delay: 1.6s; }
+
+@keyframes waveExpand {
+  0% {
+    width: 40px; height: 40px;
+    top: 50%; left: 50%;
+    margin-top: -20px; margin-left: -20px;
+    opacity: 0.6;
+  }
+  100% {
+    width: 320px; height: 320px;
+    top: 50%; left: 50%;
+    margin-top: -160px; margin-left: -160px;
+    opacity: 0;
+  }
+}
+
+.wave-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  background: var(--coral);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  box-shadow: 0 12px 32px rgba(232,114,92,0.3);
+}
+
+/* ============================================
+   ACCESSIBILITY CALLOUT
+   ============================================ */
+.a11y-section { background: var(--bg); }
+
+.a11y-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.a11y-card {
+  background: white;
+  border-radius: var(--radius);
+  padding: 36px 32px;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+.a11y-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+.a11y-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.a11y-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+/* ============================================
+   CTA / DOWNLOAD
+   ============================================ */
+.cta-section {
+  background: var(--text);
+  color: white;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 80%, rgba(232,114,92,0.15) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 40% at 80% 20%, rgba(123,174,142,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.cta-section h2 {
+  font-family: 'Nunito', sans-serif;
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.cta-section p {
+  font-size: 18px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 36px;
+  position: relative;
+}
+
+.cta-section .btn-primary {
+  font-size: 18px;
+  padding: 18px 40px;
+  position: relative;
+}
+
+.cta-apple {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 auto;
+  width: fit-content;
+}
+
+/* ============================================
+   FOOTER
+   ============================================ */
+footer {
+  background: var(--text);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  padding: 40px 0;
+}
+
+.footer-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-links {
+  display: flex;
+  gap: 28px;
+  list-style: none;
+}
+
+.footer-links a {
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.footer-links a:hover { color: rgba(255,255,255,0.8); }
+
+.footer-copy {
+  font-size: 12px;
+  color: rgba(255,255,255,0.25);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: 1fr; text-align: center; gap: 40px; }
+  .hero-desc { margin: 0 auto 36px; }
+  .hero-actions { justify-content: center; }
+  .hero-social-proof { justify-content: center; }
+  .features-grid { grid-template-columns: 1fr; }
+  .steps-row { grid-template-columns: repeat(2, 1fr); }
+  .steps-row::before { display: none; }
+  .pricing-grid { grid-template-columns: 1fr; max-width: 400px; }
+  .price-card.featured { transform: none; }
+  .voice-grid { grid-template-columns: 1fr; }
+  .a11y-grid { grid-template-columns: 1fr; }
+  .float-element { display: none; }
+  .nav-links { display: none; }
+  .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+}
+
+@media (max-width: 600px) {
+  section { padding: 60px 0; }
+  .container { padding: 0 20px; }
+  .phone-frame { width: 240px; height: 500px; }
+  .steps-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- P5.JS BACKGROUND — Resonant Murmurs -->
+<div id="p5-bg"></div>
+
+<!-- CONTENT LAYER -->
+<div class="content-layer">
+
+<!-- ============================================
+     NAVIGATION
+     ============================================ -->
+<nav id="navbar">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+          <defs><linearGradient id="navBg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F4937F"/><stop offset="50%" stop-color="#E8725C"/><stop offset="100%" stop-color="#C9584A"/></linearGradient><radialGradient id="navBl" cx="0.45" cy="0.4" r="0.55"><stop offset="0%" stop-color="#FFF"/><stop offset="100%" stop-color="#F5E6E2"/></radialGradient><linearGradient id="navW" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#E8725C" stop-opacity="0.6"/><stop offset="50%" stop-color="#E8725C"/><stop offset="100%" stop-color="#D4604E" stop-opacity="0.6"/></linearGradient></defs>
+          <rect width="1024" height="1024" fill="url(#navBg)"/>
+          <path d="M 280,260 C 280,210 320,170 380,170 L 644,170 C 704,170 744,210 744,260 L 744,520 C 744,570 704,610 644,610 L 480,610 L 400,720 L 410,610 L 380,610 C 320,610 280,570 280,520 Z" fill="url(#navBl)"/>
+          <g transform="translate(512,395)"><rect x="-148" y="-45" width="36" height="90" rx="18" fill="url(#navW)"/><rect x="-80" y="-80" width="36" height="160" rx="18" fill="url(#navW)"/><rect x="-18" y="-110" width="36" height="220" rx="18" fill="url(#navW)"/><rect x="44" y="-65" width="36" height="130" rx="18" fill="url(#navW)"/><rect x="112" y="-38" width="36" height="76" rx="18" fill="url(#navW)"/></g>
+        </svg>
+      </div>
+      <span>VoiceAAC</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#download" class="nav-cta">Download Free</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ============================================
+     HERO
+     ============================================ -->
+<section class="hero" id="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div class="hero-text">
+        <div class="hero-badge">AI-Powered AAC</div>
+        <h1>Communicate with <em>your own voice</em></h1>
+        <p class="hero-desc">VoiceAAC turns your iPhone into a powerful communication tool. Use Apple Personal Voice to speak in YOUR voice — not a robot's. Beautiful, affordable, and designed for real life.</p>
+        <div class="hero-actions">
+          <a href="#download" class="btn-primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download Free
+          </a>
+          <a href="#features" class="btn-secondary">Learn More</a>
+        </div>
+        <div class="hero-social-proof">
+          <div class="avatar-stack">
+            <div class="avatar">👩</div>
+            <div class="avatar">👨</div>
+            <div class="avatar">👧</div>
+            <div class="avatar">👦</div>
+          </div>
+          <p><strong>For everyone</strong> — adults, children,<br>caregivers, and educators</p>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="float-element float-1">
+          <div class="dot"></div>
+          Personal Voice
+        </div>
+        <div class="float-element float-2">
+          <div class="dot"></div>
+          100% Offline
+        </div>
+        <div class="float-element float-3">
+          <div class="dot"></div>
+          AI Predictions
+        </div>
+
+        <div class="phone-frame">
+          <div class="phone-screen">
+            <div class="phone-status-bar">
+              <span>9:41</span>
+              <span>5G</span>
+            </div>
+            <div class="phone-app-header">
+              <h3>VoiceAAC</h3>
+              <p>Communication Board</p>
+            </div>
+            <div class="phone-sentence-strip">
+              <span class="strip-word">I</span>
+              <span class="strip-word">want</span>
+              <span class="strip-word">to</span>
+              <span class="strip-word">go</span>
+              <span class="strip-cursor"></span>
+            </div>
+            <div class="phone-grid">
+              <div class="phone-symbol pos-pronoun"><span class="emoji">👤</span><span class="label">I / Me</span></div>
+              <div class="phone-symbol pos-verb"><span class="emoji">💬</span><span class="label">Want</span></div>
+              <div class="phone-symbol pos-verb"><span class="emoji">🚶</span><span class="label">Go</span></div>
+              <div class="phone-symbol pos-noun"><span class="emoji">🏠</span><span class="label">Home</span></div>
+              <div class="phone-symbol pos-social"><span class="emoji">👋</span><span class="label">Hello</span></div>
+              <div class="phone-symbol pos-verb"><span class="emoji">🍽️</span><span class="label">Eat</span></div>
+              <div class="phone-symbol pos-noun"><span class="emoji">💧</span><span class="label">Water</span></div>
+              <div class="phone-symbol pos-social"><span class="emoji">🙏</span><span class="label">Please</span></div>
+              <div class="phone-symbol pos-adj"><span class="emoji">😊</span><span class="label">Happy</span></div>
+              <div class="phone-symbol pos-verb"><span class="emoji">❤️</span><span class="label">Love</span></div>
+              <div class="phone-symbol pos-noun"><span class="emoji">📚</span><span class="label">School</span></div>
+              <div class="phone-symbol pos-social"><span class="emoji">✋</span><span class="label">Help</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     FEATURES
+     ============================================ -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-eyebrow">Features</div>
+      <h2>Everything you need to communicate freely</h2>
+      <p>Powerful enough for complex conversation, simple enough for anyone to use from day one.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon fi-coral">🗣️</div>
+        <h3>Personal Voice <span class="premium-tag">Premium</span></h3>
+        <p>Use Apple's Personal Voice to speak in YOUR own voice. Set up through iPhone Settings, then VoiceAAC does the rest. Your words, your voice.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon fi-sky">📋</div>
+        <h3>Symbol Boards</h3>
+        <p>Color-coded communication boards with 200+ symbols. Tap to build sentences, then speak them aloud. Three starter boards included free.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon fi-sage">🧠</div>
+        <h3>AI Predictions <span class="premium-tag">Premium</span></h3>
+        <p>Smart on-device AI learns your patterns and predicts your next word. Communication gets faster the more you use it.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon fi-gold">⚡</div>
+        <h3>Quick Phrases</h3>
+        <p>One-tap access to your most-used phrases. "I need help," "Yes," "No," and custom phrases you define. Speed when you need it most.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon fi-lavender">🎨</div>
+        <h3>Custom Boards <span class="premium-tag">Premium</span></h3>
+        <p>Create personalized boards for any situation — school, work, restaurant, doctor. Add your own words with emoji or icon selection.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon fi-warm">👶</div>
+        <h3>Adult & Child Modes</h3>
+        <p>Child mode uses larger touch targets, a 3-column grid, and playful colors. Adult mode is refined and efficient. Switch anytime.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     HOW IT WORKS
+     ============================================ -->
+<section class="how-it-works" id="how-it-works">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-eyebrow">How It Works</div>
+      <h2>Speaking in four simple steps</h2>
+      <p>No complicated setup. No learning curve. Just download and start communicating.</p>
+    </div>
+
+    <div class="steps-row">
+      <div class="step-card">
+        <div class="step-number">1</div>
+        <h3>Choose Your Mode</h3>
+        <p>Select Adult or Child mode during setup. This customizes touch targets, grid size, and visual style.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">2</div>
+        <h3>Build a Sentence</h3>
+        <p>Tap symbols on the communication board. They appear in your sentence strip at the top, building your message.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">3</div>
+        <h3>Tap to Speak</h3>
+        <p>Hit the speak button and VoiceAAC reads your sentence aloud — in your Personal Voice or a system voice.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-number">4</div>
+        <h3>Get Faster</h3>
+        <p>AI predictions learn your patterns. Quick phrases save your favorites. Communication speeds up every day.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     PERSONAL VOICE HIGHLIGHT
+     ============================================ -->
+<section class="voice-section" id="voice">
+  <div class="container">
+    <div class="voice-grid">
+      <div class="voice-content">
+        <div class="section-eyebrow">Personal Voice</div>
+        <h2>Your words. <em style="color:var(--coral);font-style:normal;">Your voice.</em></h2>
+        <p>Apple's Personal Voice lets you create a voice that sounds like you — set up right on your iPhone. VoiceAAC uses it to speak your sentences, so your communication sounds like <em>you</em>, not a robot.</p>
+
+        <div class="voice-steps">
+          <div class="voice-step">
+            <div class="voice-step-num">1</div>
+            <div>
+              <h4>Open iPhone Settings</h4>
+              <p>Go to Accessibility → Personal Voice and follow Apple's guided setup (about 15 minutes).</p>
+            </div>
+          </div>
+          <div class="voice-step">
+            <div class="voice-step-num">2</div>
+            <div>
+              <h4>Grant VoiceAAC Permission</h4>
+              <p>Open VoiceAAC and allow it to use your Personal Voice when prompted.</p>
+            </div>
+          </div>
+          <div class="voice-step">
+            <div class="voice-step-num">3</div>
+            <div>
+              <h4>Speak as You</h4>
+              <p>Every sentence you build now speaks in your own voice. Your identity, preserved.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="voice-visual">
+        <div class="waveform-art">
+          <div class="wave-ring"></div>
+          <div class="wave-ring"></div>
+          <div class="wave-ring"></div>
+          <div class="wave-center">🎤</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     ACCESSIBILITY
+     ============================================ -->
+<section class="a11y-section" id="accessibility">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-eyebrow">Accessibility First</div>
+      <h2>Designed for everyone</h2>
+      <p>Built from the ground up with accessibility at its core — not as an afterthought.</p>
+    </div>
+
+    <div class="a11y-grid">
+      <div class="a11y-card">
+        <div class="a11y-icon fi-sky">📱</div>
+        <div>
+          <h3>Works 100% Offline</h3>
+          <p>No internet required. Communication should never depend on a Wi-Fi connection. Every feature works on-device.</p>
+        </div>
+      </div>
+      <div class="a11y-card">
+        <div class="a11y-icon fi-sage">👁️</div>
+        <div>
+          <h3>Full VoiceOver Support</h3>
+          <p>Every button, every symbol, every screen is fully accessible with VoiceOver and other iOS accessibility features.</p>
+        </div>
+      </div>
+      <div class="a11y-card">
+        <div class="a11y-icon fi-lavender">🎯</div>
+        <div>
+          <h3>Large Touch Targets</h3>
+          <p>Minimum 44pt touch targets (60pt in child mode). Easy to tap for users with motor impairments or small fingers.</p>
+        </div>
+      </div>
+      <div class="a11y-card">
+        <div class="a11y-icon fi-coral">🌗</div>
+        <div>
+          <h3>Reduce Motion Support</h3>
+          <p>Respects the Reduce Motion accessibility setting. All animations gracefully disabled when needed.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     PRICING
+     ============================================ -->
+<section class="pricing" id="pricing">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-eyebrow">Pricing</div>
+      <h2>Communication should be affordable</h2>
+      <p>Competitors charge $249+. VoiceAAC starts free — and premium unlocks everything.</p>
+    </div>
+
+    <div class="pricing-grid">
+      <div class="price-card">
+        <h3>Free</h3>
+        <div class="price free">$0</div>
+        <div class="price-sub">Forever free</div>
+        <ul>
+          <li>3 starter communication boards</li>
+          <li>200+ built-in symbols</li>
+          <li>Sentence strip & typing</li>
+          <li>System voice TTS</li>
+          <li>Adult & child modes</li>
+          <li>100% offline</li>
+        </ul>
+        <a href="#download" class="btn-primary">Get Started</a>
+      </div>
+
+      <div class="price-card featured">
+        <h3>Annual</h3>
+        <div class="price">$39.99<span>/yr</span></div>
+        <div class="price-sub">Save 33% vs monthly</div>
+        <ul>
+          <li>Everything in Free, plus:</li>
+          <li>Personal Voice support</li>
+          <li>Custom board creation</li>
+          <li>AI word predictions</li>
+          <li>Usage analytics</li>
+          <li>Widget & Siri Shortcuts</li>
+        </ul>
+        <a href="#download" class="btn-primary">Start Free Trial</a>
+      </div>
+
+      <div class="price-card">
+        <h3>Lifetime</h3>
+        <div class="price">$79.99</div>
+        <div class="price-sub">One-time purchase</div>
+        <ul>
+          <li>Everything in Premium</li>
+          <li>All future updates included</li>
+          <li>No recurring charges ever</li>
+          <li>Support indie development</li>
+          <li>Early access to new features</li>
+          <li>Best long-term value</li>
+        </ul>
+        <a href="#download" class="btn-primary">Buy Lifetime</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     CTA
+     ============================================ -->
+<section class="cta-section" id="download">
+  <div class="container" style="padding:60px 32px;">
+    <h2>Give everyone a voice</h2>
+    <p>Download VoiceAAC free today. No credit card required.</p>
+    <div class="cta-apple">
+      <a href="#" class="btn-primary" style="background:white;color:var(--text);">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        Download on the App Store
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================
+     FOOTER
+     ============================================ -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <ul class="footer-links">
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/terms">Terms of Use</a></li>
+        <li><a href="mailto:dreamseedsapp@gmail.com">Contact</a></li>
+      </ul>
+      <div class="footer-copy">&copy; 2026 DreamSeeds. All rights reserved.</div>
+    </div>
+  </div>
+</footer>
+
+</div><!-- /content-layer -->
+
+<!-- ============================================
+     P5.JS — RESONANT MURMURS ALGORITHM
+     Subtle wave-emitter interference pattern
+     ============================================ -->
+<script>
+// ═══════════════════════════════════════════════════════════════
+// RESONANT MURMURS — Algorithmic background for VoiceAAC
+// Philosophy: Voice emerging from silence, overlapping waves
+// creating moments of resonance and connection
+// ═══════════════════════════════════════════════════════════════
+
+let emitters = [];
+let ripples = [];
+let noiseTime = 0;
+let canvasW, canvasH;
+
+// VoiceAAC palette — used as emotional frequencies
+const PALETTE = {
+  coral: [232, 114, 92],
+  sage: [123, 174, 142],
+  lavender: [155, 142, 196],
+  gold: [228, 185, 106],
+  sky: [107, 165, 215],
+};
+
+const COLORS = [PALETTE.coral, PALETTE.sage, PALETTE.lavender, PALETTE.gold, PALETTE.sky];
+
+function setup() {
+  canvasW = windowWidth;
+  canvasH = windowHeight;
+  let canvas = createCanvas(canvasW, canvasH);
+  canvas.parent('p5-bg');
+
+  // Initialize emitters along noise-driven paths
+  for (let i = 0; i < 8; i++) {
+    emitters.push(new WaveEmitter(i));
+  }
+}
+
+function draw() {
+  clear();
+  noiseTime += 0.003;
+
+  // Update emitters — they drift slowly along noise paths
+  for (let em of emitters) {
+    em.update();
+    em.maybeEmit();
+  }
+
+  // Update and draw ripples
+  for (let i = ripples.length - 1; i >= 0; i--) {
+    ripples[i].update();
+    ripples[i].display();
+    if (ripples[i].isDead()) {
+      ripples.splice(i, 1);
+    }
+  }
+
+  // Soft cap on ripple count for performance
+  if (ripples.length > 60) {
+    ripples.splice(0, ripples.length - 60);
+  }
+}
+
+function windowResized() {
+  canvasW = windowWidth;
+  canvasH = windowHeight;
+  resizeCanvas(canvasW, canvasH);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// WAVE EMITTER — Invisible source points that drift and emit
+// Positioned along Perlin noise paths (organic, human trajectories)
+// ═══════════════════════════════════════════════════════════════
+
+class WaveEmitter {
+  constructor(index) {
+    this.index = index;
+    this.noiseOffsetX = index * 1000;
+    this.noiseOffsetY = index * 1000 + 5000;
+    this.x = noise(this.noiseOffsetX) * canvasW;
+    this.y = noise(this.noiseOffsetY) * canvasH;
+    this.emitInterval = random(90, 200); // frames between emits
+    this.frameCount = floor(random(0, this.emitInterval));
+    this.colorIndex = index % COLORS.length;
+    this.strength = random(0.4, 1.0);
+  }
+
+  update() {
+    // Drift along noise path — slow, organic movement
+    this.noiseOffsetX += 0.002;
+    this.noiseOffsetY += 0.002;
+    this.x = noise(this.noiseOffsetX) * canvasW;
+    this.y = noise(this.noiseOffsetY) * canvasH;
+    this.frameCount++;
+  }
+
+  maybeEmit() {
+    if (this.frameCount >= this.emitInterval) {
+      this.frameCount = 0;
+      this.emitInterval = random(80, 180);
+      ripples.push(new Ripple(this.x, this.y, this.colorIndex, this.strength));
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RIPPLE — Concentric ring that expands and fades
+// Color shifts from coral (young/energetic) to sage (calm/received)
+// Where ripples overlap, constructive interference brightens them
+// ═══════════════════════════════════════════════════════════════
+
+class Ripple {
+  constructor(x, y, colorIndex, strength) {
+    this.x = x;
+    this.y = y;
+    this.radius = 0;
+    this.maxRadius = random(200, 500);
+    this.speed = random(0.6, 1.4);
+    this.colorIndex = colorIndex;
+    this.strength = strength;
+    this.life = 1.0;
+    this.strokeW = random(1.0, 2.5);
+  }
+
+  update() {
+    this.radius += this.speed;
+    this.life = 1.0 - (this.radius / this.maxRadius);
+    this.life = Math.max(0, this.life);
+  }
+
+  display() {
+    if (this.life <= 0) return;
+
+    let col = COLORS[this.colorIndex];
+    let alpha = this.life * this.strength * 35; // Very subtle
+
+    // Ease the alpha — stronger in middle of life
+    let easedLife = sin(this.life * PI);
+    alpha *= easedLife;
+
+    noFill();
+    stroke(col[0], col[1], col[2], alpha);
+    strokeWeight(this.strokeW * this.life);
+    ellipse(this.x, this.y, this.radius * 2, this.radius * 2);
+
+    // Second, thinner ring slightly behind — creates depth
+    if (this.life > 0.3) {
+      let innerAlpha = alpha * 0.4;
+      stroke(col[0], col[1], col[2], innerAlpha);
+      strokeWeight(this.strokeW * this.life * 0.5);
+      ellipse(this.x, this.y, this.radius * 1.6, this.radius * 1.6);
+    }
+  }
+
+  isDead() {
+    return this.radius >= this.maxRadius;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAV SCROLL EFFECT
+// ═══════════════════════════════════════════════════════════════
+
+window.addEventListener('scroll', () => {
+  const nav = document.getElementById('navbar');
+  if (window.scrollY > 40) {
+    nav.classList.add('scrolled');
+  } else {
+    nav.classList.remove('scrolled');
+  }
+});
+
+// Smooth scroll for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  anchor.addEventListener('click', function(e) {
+    e.preventDefault();
+    const target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+});
+</script>
+
+</body>
+</html>
